@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Left Join CSV Tool</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+</head>
+<body>
+  <h2>Left Join CSVs</h2>
+  <input type="file" id="leftCsv" accept=".csv">
+  <input type="file" id="rightCsv" accept=".csv">
+  <button onclick="performJoin()">Join</button>
+  <br><br>
+  <a id="downloadLink" style="display:none">Download Joined CSV</a>
+  <pre id="output"></pre>
+
+  <script>
+    function performJoin() {
+      const leftFile = document.getElementById('leftCsv').files[0];
+      const rightFile = document.getElementById('rightCsv').files[0];
+
+      if (!leftFile || !rightFile) {
+        alert("Please upload both CSV files.");
+        return;
+      }
+
+      Promise.all([
+        parseCSVFile(leftFile),
+        parseCSVFile(rightFile)
+      ]).then(([leftData, rightData]) => {
+        const joined = leftJoin(leftData, rightData, 'id');
+        const csv = Papa.unparse(joined);
+        document.getElementById('output').textContent = csv;
+
+        // Download link
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const link = document.getElementById('downloadLink');
+        link.href = url;
+        link.download = 'joined.csv';
+        link.style.display = 'inline';
+        link.textContent = 'Download Joined CSV';
+      });
+    }
+
+    function parseCSVFile(file) {
+      return new Promise((resolve, reject) => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: results => resolve(results.data),
+          error: reject
+        });
+      });
+    }
+
+    function leftJoin(left, right, key) {
+      const rightMap = {};
+      for (const row of right) {
+        rightMap[row[key]] = row;
+      }
+
+      return left.map(lrow => {
+        const match = rightMap[lrow[key]];
+        return {...lrow, ...(match || {})};
+      });
+    }
+  </script>
+</body>
+</html>
