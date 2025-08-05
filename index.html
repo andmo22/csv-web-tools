@@ -1,25 +1,119 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Left Join CSV Tool</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV Left Join Tool | Merge CSV Files Online</title>
+  <meta name="description" content="Join two CSV files online using a left join. This free, browser-based tool merges CSVs without uploading your data. Fast, secure, and easy to use.">
+  <meta name="keywords" content="CSV join, left join CSV, merge CSV online, CSV merge tool, combine CSV files, client-side CSV, free CSV joiner, JavaScript CSV merge, online CSV left join">
+  <meta name="author" content="andmo22">
+
+  <!-- Open Graph (for social sharing) -->
+  <meta property="og:title" content="CSV Left Join Tool" />
+  <meta property="og:description" content="Merge two CSV files with a left join in your browser. 100% private and free." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://csv-web-tools.andrewkmorrison.com/" />
+
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      line-height: 1.6;
+      margin: 2rem;
+      background: #f9f9f9;
+      color: #333;
+    }
+    header, main, footer {
+      max-width: 800px;
+      margin: auto;
+    }
+    input[type="file"], input[type="text"] {
+      margin: 0.5em 0;
+      padding: 0.4em;
+      width: 100%;
+    }
+    button {
+      padding: 0.6em 1.2em;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    pre {
+      white-space: pre-wrap;
+      background: #fff;
+      padding: 1em;
+      border: 1px solid #ccc;
+      overflow-x: auto;
+    }
+    #downloadLink {
+      display: block;
+      margin-top: 1em;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <h2>Left Join CSVs</h2>
-  <input type="file" id="leftCsv" accept=".csv">
-  <input type="file" id="rightCsv" accept=".csv">
-  <button onclick="performJoin()">Join</button>
-  <br><br>
-  <a id="downloadLink" style="display:none">Download Joined CSV</a>
-  <pre id="output"></pre>
+  <header>
+    <h1>CSV Left Join Tool – Merge Two CSV Files Online</h1>
+    <p>Free, browser-based tool to <strong>left join two CSV files</strong> by a common column. Your files stay on your computer — nothing is uploaded.</p>
+  </header>
+
+  <main>
+    <h2>Upload Your CSV Files</h2>
+
+    <label for="leftCsv">Left CSV File:</label>
+    <input type="file" id="leftCsv" accept=".csv">
+
+    <label for="rightCsv">Right CSV File:</label>
+    <input type="file" id="rightCsv" accept=".csv">
+
+    <label for="leftKey">Join Column in Left CSV:</label>
+    <input type="text" id="leftKey" placeholder="e.g. id">
+
+    <label for="rightKey">Join Column in Right CSV:</label>
+    <input type="text" id="rightKey" placeholder="e.g. user_id">
+
+    <button onclick="performJoin()">Perform Left Join</button>
+
+    <a id="downloadLink" style="display:none">Download Joined CSV</a>
+
+    <h2>Joined CSV Output</h2>
+    <pre id="output"></pre>
+
+    <section>
+      <h2>How This Tool Works</h2>
+      <p>This tool performs a <strong>left join</strong> on two CSV files entirely in your browser using JavaScript. Simply upload two CSVs, specify the columns to match on (e.g., <code>id</code> or <code>email</code>), and click "Perform Left Join." The merged result can be previewed and downloaded instantly — your files are never sent to a server.</p>
+    </section>
+
+    <section>
+      <h2>Why Use This CSV Join Tool?</h2>
+      <ul>
+        <li>🔒 <strong>Private:</strong> Your data never leaves your browser</li>
+        <li>⚡ <strong>Fast:</strong> Works instantly on large files (thanks to PapaParse)</li>
+        <li>💡 <strong>Simple:</strong> No login or account required</li>
+        <li>📄 <strong>Customizable:</strong> Choose join columns manually</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+	  &copy; 2025 andmo22 – This is a free and open-source CSV merge utility built for privacy and speed. To view the source code or report a bug, visit
+      <a href="https://github.com/andmo22/csv-web-tools" target="_blank" rel="noopener noreferrer">
+        https://github.com/andmo22/csv-web-tools
+      </a>.
+	</p>
+  </footer>
 
   <script>
     function performJoin() {
       const leftFile = document.getElementById('leftCsv').files[0];
       const rightFile = document.getElementById('rightCsv').files[0];
+      const leftKey = document.getElementById('leftKey').value.trim();
+      const rightKey = document.getElementById('rightKey').value.trim();
 
-      if (!leftFile || !rightFile) {
-        alert("Please upload both CSV files.");
+      if (!leftFile || !rightFile || !leftKey || !rightKey) {
+        alert("Please upload both CSVs and enter join columns.");
         return;
       }
 
@@ -27,17 +121,16 @@
         parseCSVFile(leftFile),
         parseCSVFile(rightFile)
       ]).then(([leftData, rightData]) => {
-        const joined = leftJoin(leftData, rightData, 'id');
+        const joined = leftJoin(leftData, rightData, leftKey, rightKey);
         const csv = Papa.unparse(joined);
         document.getElementById('output').textContent = csv;
 
-        // Download link
         const blob = new Blob([csv], {type: 'text/csv'});
         const url = URL.createObjectURL(blob);
         const link = document.getElementById('downloadLink');
         link.href = url;
         link.download = 'joined.csv';
-        link.style.display = 'inline';
+        link.style.display = 'block';
         link.textContent = 'Download Joined CSV';
       });
     }
@@ -53,15 +146,23 @@
       });
     }
 
-    function leftJoin(left, right, key) {
-      const rightMap = {};
+    function leftJoin(left, right, leftKey, rightKey) {
+      const rightMap = new Map();
       for (const row of right) {
-        rightMap[row[key]] = row;
+        rightMap.set(row[rightKey], row);
       }
 
       return left.map(lrow => {
-        const match = rightMap[lrow[key]];
-        return {...lrow, ...(match || {})};
+        const match = rightMap.get(lrow[leftKey]);
+        const merged = {...lrow};
+        if (match) {
+          for (const key in match) {
+            if (key !== rightKey && !(key in merged)) {
+              merged[key] = match[key];
+            }
+          }
+        }
+        return merged;
       });
     }
   </script>

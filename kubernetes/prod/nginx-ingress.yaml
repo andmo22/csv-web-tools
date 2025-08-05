@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: csv-web-tools-ingress
+  namespace: csv-web-tools
+  annotations:
+    kubernetes.io/ingress.class: public
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-body-size: "30M"
+spec:
+  rules:
+  - host: csv-web-tools.andrewkmorrison.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: csv-web-tools-service
+            port:
+              number: 80

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csv-web-tools
+  namespace: csv-web-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: csv-web-tools
+  template:
+    metadata:
+      labels:
+        app: csv-web-tools
+    spec:
+      containers:
+        - name: csv-web-tools
+          image: andmo22/csv-web-tools:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "128Mi"
+            limits:
+              memory: "512Mi"
