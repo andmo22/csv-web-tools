@@ -1,5 +1,5 @@
 # csv-web-tools
-Manipulate CSVs in the Browser
+Manipulate CSVs in the browser using PapaParse.
 
 ## Running Locally
 
@@ -22,3 +22,7 @@ To stop or remove, run:
 docker stop csv-join-tool
 docker rm csv-join-tool
 ```
+
+## Hosting
+
+I host the file on my home kubernetes cluster using nginx. It's probably too heavy for hosting a single file but I'm still learning. You can visit csv-web-tools.andrewkmorrison.com to see the result.
